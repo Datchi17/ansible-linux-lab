@@ -1,0 +1,68 @@
+
+PLAY [Socle commun des serveurs du lab] ****************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [target]
+
+TASK [Paquets de base installés] ***********************************************
+changed: [target]
+
+TASK [Compte d'administration présent] *****************************************
+changed: [target]
+
+TASK [Clé publique autorisée pour le compte d'administration] ******************
+changed: [target]
+
+TASK [Droit sudo sans mot de passe pour le compte d'administration] ************
+changed: [target]
+
+TASK [Durcissement SSH (fichier validé avec sshd -t)] **************************
+changed: [target]
+
+TASK [Pare-feu - autoriser SSH] ************************************************
+changed: [target]
+
+TASK [Pare-feu - autoriser HTTP] ***********************************************
+changed: [target]
+
+TASK [Pare-feu - activer, trafic entrant refusé par défaut] ********************
+changed: [target]
+
+TASK [Page d'accueil nginx] ****************************************************
+changed: [target]
+
+TASK [Service nginx démarré et activé au démarrage] ****************************
+ok: [target]
+
+TASK [Script de sauvegarde de /etc installé] ***********************************
+changed: [target]
+
+TASK [Sauvegarde de /etc planifiée chaque nuit] ********************************
+changed: [target]
+
+TASK [Appliquer les handlers maintenant, avant les vérifications] **************
+
+RUNNING HANDLER [Redémarrer ssh] ***********************************************
+changed: [target]
+
+TASK [Vérif - lire la configuration SSH effective] *****************************
+ok: [target]
+
+TASK [Vérif - mot de passe et connexion root désactivés] ***********************
+ok: [target] => {
+    "changed": false,
+    "msg": "Configuration SSH effective conforme"
+}
+
+TASK [Vérif - la page web répond et affiche le nom du serveur] *****************
+ok: [target]
+
+TASK [Vérif - contenu de la page web] ******************************************
+ok: [target] => {
+    "changed": false,
+    "msg": "Page web conforme"
+}
+
+PLAY RECAP *********************************************************************
+target                     : ok=18   changed=12   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

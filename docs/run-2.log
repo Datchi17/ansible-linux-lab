@@ -1,0 +1,65 @@
+
+PLAY [Socle commun des serveurs du lab] ****************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [target]
+
+TASK [Paquets de base installés] ***********************************************
+ok: [target]
+
+TASK [Compte d'administration présent] *****************************************
+ok: [target]
+
+TASK [Clé publique autorisée pour le compte d'administration] ******************
+ok: [target]
+
+TASK [Droit sudo sans mot de passe pour le compte d'administration] ************
+ok: [target]
+
+TASK [Durcissement SSH (fichier validé avec sshd -t)] **************************
+ok: [target]
+
+TASK [Pare-feu - autoriser SSH] ************************************************
+ok: [target]
+
+TASK [Pare-feu - autoriser HTTP] ***********************************************
+ok: [target]
+
+TASK [Pare-feu - activer, trafic entrant refusé par défaut] ********************
+ok: [target]
+
+TASK [Page d'accueil nginx] ****************************************************
+ok: [target]
+
+TASK [Service nginx démarré et activé au démarrage] ****************************
+ok: [target]
+
+TASK [Script de sauvegarde de /etc installé] ***********************************
+ok: [target]
+
+TASK [Sauvegarde de /etc planifiée chaque nuit] ********************************
+ok: [target]
+
+TASK [Appliquer les handlers maintenant, avant les vérifications] **************
+
+TASK [Vérif - lire la configuration SSH effective] *****************************
+ok: [target]
+
+TASK [Vérif - mot de passe et connexion root désactivés] ***********************
+ok: [target] => {
+    "changed": false,
+    "msg": "Configuration SSH effective conforme"
+}
+
+TASK [Vérif - la page web répond et affiche le nom du serveur] *****************
+ok: [target]
+
+TASK [Vérif - contenu de la page web] ******************************************
+ok: [target] => {
+    "changed": false,
+    "msg": "Page web conforme"
+}
+
+PLAY RECAP *********************************************************************
+target                     : ok=17   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
