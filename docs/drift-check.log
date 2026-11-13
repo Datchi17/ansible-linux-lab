@@ -1,0 +1,86 @@
+
+PLAY [Socle commun des serveurs du lab] ****************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [target]
+
+TASK [Paquets de base installés] ***********************************************
+ok: [target]
+
+TASK [Compte d'administration présent] *****************************************
+ok: [target]
+
+TASK [Clé publique autorisée pour le compte d'administration] ******************
+ok: [target]
+
+TASK [Droit sudo sans mot de passe pour le compte d'administration] ************
+ok: [target]
+
+TASK [Durcissement SSH (fichier validé avec sshd -t)] **************************
+--- before: /etc/ssh/sshd_config.d/00-lab-hardening.conf
++++ after: /etc/ssh/sshd_config.d/00-lab-hardening.conf
+@@ -1,4 +1,4 @@
+ # Géré par Ansible - ne pas modifier à la main
+ PasswordAuthentication no
+ KbdInteractiveAuthentication no
+-PermitRootLogin yes
++PermitRootLogin no
+
+changed: [target]
+
+TASK [Pare-feu - autoriser SSH] ************************************************
+ok: [target]
+
+TASK [Pare-feu - autoriser HTTP] ***********************************************
+ok: [target]
+
+TASK [Pare-feu - activer, trafic entrant refusé par défaut] ********************
+ok: [target]
+
+TASK [Page d'accueil nginx] ****************************************************
+--- before
++++ after: /home/ubuntu/.ansible/tmp/ansible-local-2741n5g3ov56/tmpeiqw0orw/index.html.j2
+@@ -0,0 +1,11 @@
++<!doctype html>
++<html lang="fr">
++<head>
++  <meta charset="utf-8">
++  <title>target</title>
++</head>
++<body>
++  <h1>target</h1>
++  <p>Serveur configuré par Ansible. Ne modifie pas ce fichier à la main : il sera réécrit.</p>
++</body>
++</html>
+
+changed: [target]
+
+TASK [Service nginx démarré et activé au démarrage] ****************************
+ok: [target]
+
+TASK [Script de sauvegarde de /etc installé] ***********************************
+ok: [target]
+
+TASK [Sauvegarde de /etc planifiée chaque nuit] ********************************
+ok: [target]
+
+TASK [Appliquer les handlers maintenant, avant les vérifications] **************
+
+RUNNING HANDLER [Redémarrer ssh] ***********************************************
+changed: [target]
+
+TASK [Vérif - lire la configuration SSH effective] *****************************
+skipping: [target]
+
+TASK [Vérif - mot de passe et connexion root désactivés] ***********************
+skipping: [target]
+
+TASK [Vérif - la page web répond et affiche le nom du serveur] *****************
+skipping: [target]
+
+TASK [Vérif - contenu de la page web] ******************************************
+skipping: [target]
+
+PLAY RECAP *********************************************************************
+target                     : ok=14   changed=3    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+
