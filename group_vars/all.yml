@@ -1,0 +1,19 @@
+---
+# Compte d'administration créé par le playbook
+admin_user: ops
+# Clé publique autorisée pour ce compte (lue sur la machine de contrôle)
+admin_public_key_file: "~/.ssh/lab_ed25519.pub"
+
+# Paquets installés partout
+base_packages:
+  - curl
+  - cron
+  - htop
+  - nginx
+  - ufw
+  - vim
+
+# Sauvegarde nocturne de /etc
+backup_hour: "2"
+backup_minute: "30"
+backup_keep_days: 7

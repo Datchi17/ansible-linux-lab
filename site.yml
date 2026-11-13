@@ -1,0 +1,162 @@
+---
+- name: Socle commun des serveurs du lab
+  hosts: servers
+  become: true
+
+  tasks:
+    # --- Paquets -----------------------------------------------------------
+    - name: Paquets de base installés
+      ansible.builtin.apt:
+        name: "{{ base_packages }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      tags: [packages]
+
+    # --- Compte d'administration -------------------------------------------
+    - name: Compte d'administration présent
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        shell: /bin/bash
+        create_home: true
+        state: present
+      tags: [users]
+
+    - name: Clé publique autorisée pour le compte d'administration
+      ansible.posix.authorized_key:
+        user: "{{ admin_user }}"
+        key: "{{ lookup('ansible.builtin.file', admin_public_key_file) }}"
+        state: present
+      tags: [users]
+
+    - name: Droit sudo sans mot de passe pour le compte d'administration
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/90-{{ admin_user }}"
+        content: "{{ admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s
+      tags: [users]
+
+    # --- SSH ---------------------------------------------------------------
+    # Préfixe 00- : sshd garde la PREMIÈRE valeur rencontrée pour chaque option,
+    # donc ce fichier doit être lu avant ceux de cloud-init (50-, 60-).
+    - name: Durcissement SSH (fichier validé avec sshd -t)
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-lab-hardening.conf
+        content: |
+          # Géré par Ansible - ne pas modifier à la main
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitRootLogin no
+        owner: root
+        group: root
+        mode: "0644"
+        validate: /usr/sbin/sshd -t -f %s
+      notify: Redémarrer ssh
+      tags: [ssh]
+
+    # --- Pare-feu ----------------------------------------------------------
+    # Toujours autoriser SSH AVANT d'activer le pare-feu, sinon on se coupe l'accès.
+    - name: Pare-feu - autoriser SSH
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+        comment: SSH
+      tags: [firewall]
+
+    - name: Pare-feu - autoriser HTTP
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+        comment: HTTP
+      tags: [firewall]
+
+    - name: Pare-feu - activer, trafic entrant refusé par défaut
+      community.general.ufw:
+        state: enabled
+        default: deny
+        direction: incoming
+      tags: [firewall]
+
+    # --- Serveur web -------------------------------------------------------
+    - name: Page d'accueil nginx
+      ansible.builtin.template:
+        src: index.html.j2
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: "0644"
+      tags: [web]
+
+    - name: Service nginx démarré et activé au démarrage
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+      tags: [web]
+
+    # --- Sauvegarde --------------------------------------------------------
+    - name: Script de sauvegarde de /etc installé
+      ansible.builtin.copy:
+        src: backup-etc.sh
+        dest: /usr/local/bin/backup-etc.sh
+        owner: root
+        group: root
+        mode: "0750"
+      tags: [backup]
+
+    - name: Sauvegarde de /etc planifiée chaque nuit
+      ansible.builtin.cron:
+        name: sauvegarde de /etc
+        minute: "{{ backup_minute }}"
+        hour: "{{ backup_hour }}"
+        job: "/usr/local/bin/backup-etc.sh {{ backup_keep_days }}"
+        user: root
+      tags: [backup]
+
+    # --- Vérifications (ne modifient rien) -----------------------------------
+    - name: Appliquer les handlers maintenant, avant les vérifications
+      ansible.builtin.meta: flush_handlers
+      tags: [ssh, verify]
+
+    - name: Vérif - lire la configuration SSH effective
+      ansible.builtin.command: /usr/sbin/sshd -T
+      register: sshd_effective
+      changed_when: false
+      when: not ansible_check_mode
+      tags: [verify]
+
+    - name: Vérif - mot de passe et connexion root désactivés
+      ansible.builtin.assert:
+        that:
+          - "'passwordauthentication no' in sshd_effective.stdout_lines"
+          - "'permitrootlogin no' in sshd_effective.stdout_lines"
+        success_msg: Configuration SSH effective conforme
+      when: not ansible_check_mode
+      tags: [verify]
+
+    - name: Vérif - la page web répond et affiche le nom du serveur
+      ansible.builtin.uri:
+        url: http://localhost/
+        return_content: true
+      register: web_page
+      changed_when: false
+      when: not ansible_check_mode
+      tags: [verify]
+
+    - name: Vérif - contenu de la page web
+      ansible.builtin.assert:
+        that: inventory_hostname in web_page.content
+        success_msg: Page web conforme
+      when: not ansible_check_mode
+      tags: [verify]
+
+  handlers:
+    - name: Redémarrer ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

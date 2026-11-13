@@ -1,0 +1,9 @@
+# Adresses propres à ton lab
+inventory/hosts.ini
+# Jamais dans Git : clés, mots de passe, fichiers Vault en clair
+*.pem
+id_*
+lab_ed25519*
+.vault_pass*
+*.retry
+.ansible/
